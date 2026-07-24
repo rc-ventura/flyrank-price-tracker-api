@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "nodemon -w ./app.js app.js"
+    "dev": "nodemon -w ./src -w ./index.js index.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
