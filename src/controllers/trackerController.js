@@ -2,54 +2,45 @@ import trackerRepository from "../repositories/tracker.Repository.js";
 
 
 // GET /trackers
-const getTracker = async () => {
-    
-    try{
-        const tracker = await trackerRepository.getTracker();
-
-    if(!tracker) {
-        res.status(404).send("Tracker not found");
-        return;
-    }
-
-    res.status(200).send(tracker);
+const getTrackers = async (req, res) => {
+    try {
+        const trackers = await trackerRepository.getTrackers();
+        res.status(200).json(trackers);
     } catch (error) {
-        console.error("Error getting tracker:", error);
-        res.status(500).send("Internal Server Error");
+        console.error("Error getting trackers:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 // GET /trackers/:id
 const getTrackerById = async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
 
-    try{
+    try {
         const tracker = await trackerRepository.getTrackerById(Number(id));
 
-    if(!tracker) {
-        res.status(404).send("Tracker not found");
-        return;
-    }
+        if (!tracker) {
+            res.status(404).json({ error: `Tracker ${id} not found` });
+            return;
+        }
 
-    res.status(200).send(tracker);
+        res.status(200).json(tracker);
     } catch (error) {
-        console.error("Error getting task:", error);
-        res.status(500).send("Internal Server Error");
+        console.error("Error getting tracker:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-// POST /tasks
+// POST /trackers
 
 
-// PUT /tasks/:id
+// PUT /trackers/:id
 
-// DELETE /tasks/:id
+
+// DELETE /trackers/:id
 
 
 export default {
-    getTasks,
-    getTaskById,
-    createTask,
-    updateTask,
-    deleteTask
+    getTrackers,
+    getTrackerById,
 }
