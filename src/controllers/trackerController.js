@@ -2,75 +2,60 @@ import trackerService from "../services/tracker.Service.js";
 
 
 // GET /trackers
-const getTrackers = async (req, res) => {
+const getTrackers = async (req, res, next) => {
     try {
         const trackers = await trackerService.listAllTrackers();
         res.status(200).json(trackers);
-    } catch (error) {
-        console.error("Error getting trackers:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (err) {
+        next(err);
     }
 }
 
 // GET /trackers/:id
-const getTrackerById = async (req, res) => {
+const getTrackerById = async (req, res, next) => {
     const { id } = req.params;
 
     try {
         const tracker = await trackerService.findTrackerById(Number(id));
-
-        if (!tracker) {
-            res.status(404).json({ error: `Tracker ${id} not found` });
-            return;
-        }
-
         res.status(200).json(tracker);
-    } catch (error) {
-        console.error("Error getting tracker:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (err) {
+        next(err);
     }
 }
 
 // POST /trackers
-const createTracker = async (req, res) => {
-    const { name, url, targetSelector, frequency, status } = req.body;
+const createTracker = async (req, res, next) => {
 
     try {
-        const tracker = await trackerService.createTracker({ name, url, targetSelector, frequency, status });
+        const tracker = await trackerService.createTracker(req.body ?? {});
         res.status(201).json(tracker);
-    } catch (error) {
-        console.error("Error creating tracker:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (err) {
+        next(err);
     }
 }
 
 // PUT /trackers/:id
-const updateTracker = async (req, res) => {
+const updateTracker = async (req, res, next) => {
     const { id } = req.params;
-    const { name, url, targetSelector, frequency, status } = req.body;
-
     try {
-        const tracker = await trackerService.updateTracker(Number(id), { name, url, targetSelector, frequency, status });
+        const tracker = await trackerService.updateTracker(Number(id), req.body ?? {});
         res.status(200).json(tracker);
-    } catch (error) {
-        console.error("Error updating tracker:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (err) {
+        next(err);
     }
 }
 
 // DELETE /trackers/:id
-const deleteTracker = async (req, res) => {
+const deleteTracker = async (req, res, next) => {
     const { id } = req.params;
 
     try {
-        const tracker = await trackerService.deleteTracker(Number(id));
-        res.status(200).json(tracker);
-    } catch (error) {
-        console.error("Error deleting tracker:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        await trackerService.deleteTracker(Number(id));
+        res.status(204).send();
+    } catch (err) {
+        next(err);
     }
 }
-
 
 export default {
     getTrackers,

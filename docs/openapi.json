@@ -1,0 +1,352 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Competitor Price Tracker API",
+    "description": "An automated SaaS API that continuously monitors competitor product URLs and extracts prices via CSS selectors—delivering instant alerts and AI-driven market intelligence whenever prices fluctuate.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "FlyRank",
+      "url": "https://github.com/rc-ventura/fly_rank_ai_backend"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/trackers": {
+      "get": {
+        "summary": "List all trackers",
+        "description": "Returns the entire list of tracked competitor products.",
+        "tags": ["Trackers"],
+        "responses": {
+          "200": {
+            "description": "A JSON array of all trackers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tracker"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new tracker",
+        "description": "Accepts new tracking targets with server-side validation. Only name, url, and targetSelector are required — frequency defaults to 'daily' and status defaults to 'active'.",
+        "tags": ["Trackers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackerInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tracker created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tracker"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or empty required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trackers/{id}": {
+      "get": {
+        "summary": "Get a tracker by ID",
+        "description": "Returns one tracker using the path parameter ID.",
+        "tags": ["Trackers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TrackerId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracker found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tracker"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tracker not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a tracker",
+        "description": "Replaces or updates tracker attributes. Only send the fields you want to change — at least one field is required.",
+        "tags": ["Trackers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TrackerId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackerUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tracker updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tracker"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — empty fields or no fields provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tracker not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a tracker",
+        "description": "Removes the tracker from memory. Returns no content on success.",
+        "tags": ["Trackers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TrackerId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tracker deleted successfully — no content returned"
+          },
+          "404": {
+            "description": "Tracker not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "TrackerId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The numeric ID of the tracker",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "example": 1
+        }
+      }
+    },
+    "schemas": {
+      "Tracker": {
+        "type": "object",
+        "description": "A competitor price tracking target",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the tracker",
+            "example": "Tech Store Headphones"
+          },
+          "url": {
+            "type": "string",
+            "description": "Competitor product URL to monitor",
+            "example": "https://site1.com/p1"
+          },
+          "targetSelector": {
+            "type": "string",
+            "description": "CSS selector used to extract the price from the page",
+            "example": ".price"
+          },
+          "frequency": {
+            "type": "string",
+            "description": "How often the tracker checks for price changes",
+            "enum": ["daily", "hourly", "weekly"],
+            "example": "daily"
+          },
+          "status": {
+            "type": "string",
+            "description": "Whether the tracker is actively monitoring",
+            "enum": ["active", "paused"],
+            "example": "active"
+          }
+        },
+        "required": ["id", "name", "url", "targetSelector", "frequency", "status"]
+      },
+      "TrackerInput": {
+        "type": "object",
+        "description": "Required fields for creating a new tracker",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the tracker",
+            "example": "Tech Store Headphones"
+          },
+          "url": {
+            "type": "string",
+            "description": "Competitor product URL to monitor",
+            "example": "https://site1.com/p1"
+          },
+          "targetSelector": {
+            "type": "string",
+            "description": "CSS selector used to extract the price from the page",
+            "example": ".price"
+          }
+        },
+        "required": ["name", "url", "targetSelector"]
+      },
+      "TrackerUpdate": {
+        "type": "object",
+        "description": "Fields to update — at least one field must be provided",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the tracker",
+            "example": "Updated Tracker Name"
+          },
+          "url": {
+            "type": "string",
+            "description": "Competitor product URL to monitor",
+            "example": "https://site2.com/p2"
+          },
+          "targetSelector": {
+            "type": "string",
+            "description": "CSS selector used to extract the price from the page",
+            "example": "#price-tag"
+          }
+        },
+        "minProperties": 1
+      },
+      "Error": {
+        "type": "object",
+        "description": "Standard error response",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Tracker 99 not found"
+          }
+        },
+        "required": ["error"]
+      }
+    }
+  }
+}

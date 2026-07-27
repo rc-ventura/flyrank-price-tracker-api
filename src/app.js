@@ -1,12 +1,16 @@
 import express from 'express';
 import trackerRouter from './routes/trackerRouter.js';
+import errorHandler from './middlewares/errorHandler.js';
+import swaggerUi from 'swagger-ui-express';
+import openApiSpec from '../docs/openapi.json' with { type: 'json' };
+
 
 // singleton pattern
 const createApp = () => {
     const app = express();
     
     // swagger
-    // TODO: add swagger
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
     // middleware PARSE JSON
     app.use(express.json());
@@ -14,8 +18,9 @@ const createApp = () => {
     // middleware routes
     app.use("/api/trackers", trackerRouter);
 
-    // middleware error handler 
-    
+    // middleware error handler
+    app.use(errorHandler);
+
     return app;
 } 
 
