@@ -1,5 +1,6 @@
 import express from 'express';
 import trackerRouter from './routes/trackerRouter.js';
+import metaRouter from './routes/metaRouter.js';
 import errorHandler from './middlewares/errorHandler.js';
 import swaggerUi from 'swagger-ui-express';
 import openApiSpec from '../docs/openapi.json' with { type: 'json' };
@@ -16,6 +17,7 @@ const createApp = () => {
     app.use(express.json());
     
     // middleware routes
+    app.use("/", metaRouter);
     app.use("/api/trackers", trackerRouter);
 
     // middleware error handler

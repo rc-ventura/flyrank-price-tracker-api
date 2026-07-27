@@ -41,9 +41,11 @@ const updateTracker = async (id, body = {}) => {
     const hasName = Object.prototype.hasOwnProperty.call(body, 'name');
     const hasUrl = Object.prototype.hasOwnProperty.call(body, 'url');
     const hasTargetSelector = Object.prototype.hasOwnProperty.call(body, 'targetSelector');
+    const hasFrequency = Object.prototype.hasOwnProperty.call(body, 'frequency');
+    const hasStatus = Object.prototype.hasOwnProperty.call(body, 'status');
 
-    if(!hasName && !hasUrl && !hasTargetSelector) {
-        throw new ValidationError("At least one field (name, url, or targetSelector) must be provided for update");
+    if(!hasName && !hasUrl && !hasTargetSelector && !hasFrequency && !hasStatus) {
+        throw new ValidationError("At least one field must be provided for update");
     }
 
     const changes = {};
@@ -68,6 +70,22 @@ const updateTracker = async (id, body = {}) => {
             throw new ValidationError("Target selector cannot be empty");
         }
         changes.targetSelector = String(body.targetSelector).trim();
+    }
+
+    if(hasFrequency) {
+        const validFrequencies = ['daily', 'hourly', 'weekly'];
+        if(!validFrequencies.includes(body.frequency)) {
+            throw new ValidationError("Frequency must be one of: daily, hourly, weekly");
+        }
+        changes.frequency = body.frequency;
+    }
+
+    if(hasStatus) {
+        const validStatuses = ['active', 'paused'];
+        if(!validStatuses.includes(body.status)) {
+            throw new ValidationError("Status must be one of: active, paused");
+        }
+        changes.status = body.status;
     }
 
     const updated = await trackerRepository.update(id, changes);
