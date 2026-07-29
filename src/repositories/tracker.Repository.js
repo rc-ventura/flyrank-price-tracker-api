@@ -1,55 +1,31 @@
+import db from '../../db/tracker.db.js'
 
-const SEED_TRACKERS = [
-  { id: 1, name: "Tech Store Headphones", 
-    url: "https://site1.com/p1", 
-    targetSelector: ".price", 
-    frequency: "daily", 
-    status: "active" },
-
-  { id: 2, name: "Marketplace Monitor", 
-    url: "https://site2.com/p2", 
-    targetSelector: "#price-tag", 
-    frequency: "hourly", 
-    status: "active" },
-
-  { id: 3, name: "Boutique Retailer", 
-    url: "https://site3.com/p3", 
-    targetSelector: "span.amount", 
-    frequency: "weekly", 
-    status: "paused" }
-];
-
-
-let trackers = SEED_TRACKERS.map((tracker, index) => ({...tracker}));
 
 const findAll = async () => {
-    return trackers.map(tracker => ({...tracker}));
+    return db.prepare('SELECT * FROM trackers').all();
 }
 
 const findById = async (id) => {
-    const tracker = trackers.find(tracker => tracker.id === id);
-    return tracker ? {...tracker} : null;
+    const trackerById = db.prepare('SELECT * FROM trackers WHERE id = ?').get(id);
+    return trackerById ? trackerById : null;
 }
 
 const create = async ({name, url, targetSelector, frequency, status}) => {
-    const id = trackers.length === 0 ? 1 : Math.max(...trackers.map((t) => t.id)) + 1;
-    const tracker = {id, name, url, targetSelector, frequency, status};
-    trackers.push(tracker);
-    return {...tracker };
+    const trackerCreated = db.prepare('INSERT INTO trackers (name, url, targetSelector, frequency, status) VALUES (?, ?, ?, ?, ?)').run(name, url, targetSelector, frequency, status);
+    return db.prepare('SELECT * FROM trackers WHERE id = ?').get(trackerCreated.lastInsertRowid);
 }
 
 const update = async (id, changes) => {
-    const tracker = trackers.find((t) => t.id === id);
-    if (!tracker) return null;
-    Object.assign(tracker, changes);
-    return {...tracker};
+    const trackerUpdated = db.prepare('SELECT * FROM trackers WHERE id = ?').get(id);
+    if (!trackerUpdated) return null;
+    Object.assign(trackerUpdated, changes);
+    db.prepare('UPDATE trackers SET name = ?, url = ?, targetSelector = ?, frequency = ?, status = ? WHERE id = ?').run(trackerUpdated.name, trackerUpdated.url, trackerUpdated.targetSelector, trackerUpdated.frequency, trackerUpdated.status, id);
+    return trackerUpdated;
 }
 
 const remove = async (id) => {
-    const index = trackers.findIndex((t) => t.id === id);
-    if (index === -1) return false;
-    trackers.splice(index, 1);
-    return true;
+    const result = db.prepare('DELETE FROM trackers WHERE id = ?').run(id);
+    return result.changes > 0;
 }
 
 export default {
