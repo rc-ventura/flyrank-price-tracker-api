@@ -16,7 +16,7 @@ An automated, lightweight SaaS API that continuously monitors competitor product
 - **Framework:** Express 5
 - **Documentation:** Swagger UI (OpenAPI 3.0)
 - **Architecture:** Controller → Service → Repository (MVC Layered)
-- **Storage:** In-memory (no database yet)
+- **Storage:** SQLite (via better-sqlite3) — persistent, single-file database
 
 ## Quick Start
 
@@ -33,6 +33,8 @@ npm run dev
 
 The server starts on `http://localhost:3000`.
 
+The SQLite database file (`db/trackers.db`) is **created automatically** on first run — no manual setup required. The `trackers` table is created if it doesn't exist, and 3 seed trackers are inserted only when the table is empty.
+
 - **API base URL:** `http://localhost:3000/api/trackers`
 - **Swagger UI:** `http://localhost:3000/docs`
 
@@ -45,13 +47,16 @@ src/
 ├── services/
 │   └── tracker.Service.js      # Business rules & validation
 ├── repositories/
-│   └── tracker.Repository.js   # Manages in-memory array data
+│   └── tracker.Repository.js   # Executes SQL queries against the SQLite database
 ├── routes/
 │   └── trackerRouter.js        # Defines URL paths & HTTP verbs
 ├── middlewares/
 │   └── errorHandler.js         # Centralized error handling
 ├── error.js                    # Custom error classes (ValidationError, NotFoundError)
 └── app.js                      # Express app configuration
+
+db/
+└── tracker.db.js               # Initializes SQLite, creates table & seeds data on first run
 ```
 
 ## Endpoint Reference
@@ -171,15 +176,38 @@ Interactive API documentation is available at `http://localhost:3000/docs` after
 
 ![Swagger UI](docs/swagger-screenshot.png)
 
+## Why SQLite?
+
+SQLite was chosen because it is:
+
+- **Single-file** — the entire database is one file (`db/trackers.db`), no separate server to install or run
+- **Zero setup** — the database file and table are created automatically on first run
+- **Persistent** — data survives server restarts, unlike in-memory storage
+- **Git-ignored** — `db/*.db` is in `.gitignore`, so each clone starts fresh with a clean database
+
 ## Seed Data
 
-The API starts with 3 pre-filled trackers:
+On first run, the database is seeded with 3 trackers (only if the table is empty — restarting does not duplicate them):
 
 | id | name | url | targetSelector | frequency | status |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Tech Store Headphones | `https://site1.com/p1` | `.price` | daily | active |
 | 2 | Marketplace Monitor | `https://site2.com/p2` | `#price-tag` | hourly | active |
 | 3 | Boutique Retailer | `https://site3.com/p3` | `span.amount` | weekly | paused |
+
+## Example SQL Query
+
+You can open the database directly and run queries by hand:
+
+```bash
+sqlite3 db/trackers.db
+```
+
+```sql
+SELECT * FROM trackers WHERE status = 'active';
+```
+
+Returns all active trackers — the same data your API serves, read live from the same file.
 
 ## License
 
