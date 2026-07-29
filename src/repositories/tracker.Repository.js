@@ -7,7 +7,7 @@ const findAll = async () => {
 
 const findById = async (id) => {
     const trackerById = db.prepare('SELECT * FROM trackers WHERE id = ?').get(id);
-    return trackerById ? trackerById : null;
+    return trackerById ?? null;
 }
 
 const create = async ({name, url, targetSelector, frequency, status}) => {
