@@ -20,6 +20,11 @@ const createApp = () => {
     app.use("/", metaRouter);
     app.use("/api/trackers", trackerRouter);
 
+    // JSON 404 for unmatched routes
+    app.use((req, res) => {
+        res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
+    });
+
     // middleware error handler
     app.use(errorHandler);
 

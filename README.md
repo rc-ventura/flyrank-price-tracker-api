@@ -68,7 +68,11 @@ db/
 | Create | POST | `/api/trackers` | 201 Created | 400 Bad Request |
 | Update | PUT | `/api/trackers/:id` | 200 OK | 400 Bad Request / 404 Not Found |
 | Delete | DELETE | `/api/trackers/:id` | 204 No Content | 404 Not Found |
+| Stats | GET | `/stats` | 200 OK | — |
+| Reset | POST | `/reset` | 200 OK | — |
 | Swagger UI | GET | `/docs` | 200 OK | — |
+
+`GET /api/trackers` also supports optional query parameters: `?status=active|paused` (SQL `WHERE` filter) and `?search=keyword` (SQL `LIKE` on the name, case-insensitive).
 
 ## Sample curl Output
 
@@ -195,6 +199,8 @@ On first run, the database is seeded with 3 trackers (only if the table is empty
 | 2 | Marketplace Monitor | `https://site2.com/p2` | `#price-tag` | hourly | active |
 | 3 | Boutique Retailer | `https://site3.com/p3` | `span.amount` | weekly | paused |
 
+The three seed inserts run inside a single **transaction**, so seeding is all-or-nothing — a failure halfway can never leave the table with one or two rows instead of three.
+
 ### Migration & Seed — Terminal Proof
 
 The screenshot below (captured with Playwright) demonstrates that the database was migrated and seeded: the `trackers` table schema is created, the table is present, and the 3 seed rows are populated.
@@ -210,6 +216,14 @@ sqlite3 db/trackers.db "SELECT COUNT(*) FROM trackers;"   # seed: 3 rows
 sqlite3 db/trackers.db -header -column "SELECT * FROM trackers;"  # seed data
 ```
 
+### DB Browser — Browse Data (W3 Stage 5)
+
+The screenshot below (captured with Playwright) shows the `trackers` table opened in a **DB Browser for SQLite–style "Browse Data"** view, with the **Browse Data** tab selected and all 8 columns visible: `id`, `name`, `url`, `targetSelector`, `frequency`, `status`, `created_at`, `updated_at`. The 3 seed rows appear exactly as they live in the file — the grid is rendered from `db/trackers.db` parsed by the real SQLite engine compiled to WebAssembly (sql.js), so the rows you see are the same rows the API serves.
+
+![DB Browser — Browse Data](docs/db-browser-browse-data.png)
+
+> **Tooling note:** the native DB Browser for SQLite is a desktop GUI that Playwright (browser-only) cannot drive, and the live web viewer `sqliteviewer.app` relies on the File System Access API (`showOpenFilePicker`), which Playwright intercepts but cannot feed a local file into. To capture this screenshot via Playwright as required, a local DB Browser–style "Browse Data" page was served and loaded `trackers.db` same-origin through the real SQLite WASM engine — no data was hand-typed or mocked.
+
 ## Example SQL Query
 
 You can open the database directly and run queries by hand:
@@ -223,6 +237,16 @@ SELECT * FROM trackers WHERE status = 'active';
 ```
 
 Returns all active trackers — the same data your API serves, read live from the same file.
+
+## Optional Extras Implemented
+
+- **Filter & search in SQL:** `GET /api/trackers?status=paused` uses `WHERE status = ?` and `?search=head` uses `WHERE name LIKE ?` — the database filters while it reads, instead of loading every row and looping in JavaScript.
+- **Sort:** results come back ordered by name (`ORDER BY name`).
+- **Stats:** `GET /stats` computes `{ "total", "active", "paused" }` with `SELECT COUNT(*)` in SQL.
+- **Reset:** `POST /reset` wipes the table and re-inserts the 3 seeds inside a transaction (ids restart at 1).
+- **Timestamps:** `created_at` and `updated_at` columns, set by SQLite defaults on insert and refreshed on every update. Adding columns meant changing the table's shape — and discovering that `CREATE TABLE IF NOT EXISTS` does *nothing* to a database file that already exists, so the old file had to be deleted and recreated for the new columns to appear. That awkward moment — "the schema changed but the data didn't follow" — is exactly why migrations exist as a discipline.
+- **Indexes:** `idx_trackers_status` and `idx_trackers_name` let SQLite look up rows by status or name without scanning the whole table — they only pay off now that filtering happens in SQL, not in JavaScript loops.
+
 
 ## License
 

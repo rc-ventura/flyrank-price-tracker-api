@@ -2,9 +2,10 @@ import trackerService from "../services/tracker.Service.js";
 
 
 // GET /trackers
+// Read: list (with optional ?status= and ?search= extras)
 const getTrackers = async (req, res, next) => {
     try {
-        const trackers = await trackerService.listAllTrackers();
+        const trackers = await trackerService.listAllTrackers({ status: req.query.status, search: req.query.search });
         res.status(200).json(trackers);
     } catch (err) {
         next(err);
@@ -57,10 +58,32 @@ const deleteTracker = async (req, res, next) => {
     }
 }
 
+// GET /stats
+const getStats = async (req, res, next) => {
+    try {
+        const stats = await trackerService.getStats();
+        res.status(200).json(stats);
+    } catch (err) {
+        next(err);
+    }
+}
+
+// POST /reset
+const resetTrackers = async (req, res, next) => {
+    try {
+        const trackers = await trackerService.resetTrackers();
+        res.status(200).json(trackers);
+    } catch (err) {
+        next(err);
+    }
+}
+
 export default {
     getTrackers,
     getTrackerById,
     createTracker,
     updateTracker,
-    deleteTracker
+    deleteTracker,
+    getStats,
+    resetTrackers
 }

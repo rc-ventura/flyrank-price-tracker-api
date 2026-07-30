@@ -2,10 +2,23 @@ import trackerRepository from "../repositories/tracker.Repository.js";
 import { ValidationError, NotFoundError } from "../error.js";
 
 
-const listAllTrackers = async () => {
-    let result = await trackerRepository.findAll();
-    return result;
+const listAllTrackers = async ({status, search} = {}) => {
+    if(status !== undefined && status !== 'active' && status !== 'paused') {
+        throw new ValidationError("Status must be 'active' or 'paused'");
+    }
+
+    let word;
+    if(search !== undefined) {
+        word = String(search).trim().toLowerCase();
+        if(word === '') {
+            throw new ValidationError("Search word cannot be empty");
+        }
+    }
+
+    return trackerRepository.findAll({status, search: word});
 }
+
+
 
 const findTrackerById = async (id) => {
     let tracker = await trackerRepository.findById(id);
@@ -28,13 +41,20 @@ const createTracker = async (body = {}) => {
         throw new ValidationError("Target selector is required");
     }
 
-    return await trackerRepository.create({
-        name: String(name).trim(),
-        url: String(url).trim(),
-        targetSelector: String(targetSelector).trim(),
-        frequency: "daily",
-        status: "active"
-    });
+    try {
+        return await trackerRepository.create({
+            name: String(name).trim(),
+            url: String(url).trim(),
+            targetSelector: String(targetSelector).trim(),
+            frequency: "daily",
+            status: "active"
+        });
+    } catch (err) {
+        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+            throw new ValidationError("A tracker with this url and targetSelector already exists");
+        }
+        throw err;
+    }
 }
 
 const updateTracker = async (id, body = {}) => {
@@ -88,7 +108,15 @@ const updateTracker = async (id, body = {}) => {
         changes.status = body.status;
     }
 
-    const updated = await trackerRepository.update(id, changes);
+    let updated;
+    try {
+        updated = await trackerRepository.update(id, changes);
+    } catch (err) {
+        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+            throw new ValidationError("A tracker with this url and targetSelector already exists");
+        }
+        throw err;
+    }
     if (!updated) {
         throw new NotFoundError(`Tracker ${id} not found`);
     }
@@ -103,11 +131,22 @@ const deleteTracker = async (id) => {
     return removed;
 }
 
+
+const getStats = async () => {
+    return trackerRepository.countByStatus();
+}
+
+const resetTrackers = async () => {
+    return trackerRepository.reset();
+}
+
 export default {
     listAllTrackers,
     findTrackerById,
     createTracker,
     updateTracker,
-    deleteTracker
+    deleteTracker,
+    getStats,
+    resetTrackers
 };
 

@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3'
-const db = new Database('db/trackers.db')
+const db = new Database(process.env.DB_PATH || 'db/trackers.db')
 
 // Create Table
 const createTable = `
@@ -10,6 +10,8 @@ const createTable = `
     targetSelector TEXT NOT NULL,
     frequency TEXT DEFAULT 'daily',
     status TEXT DEFAULT 'active',
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
     UNIQUE(url, targetSelector)
 
  
@@ -18,6 +20,8 @@ const createTable = `
 `;
 
 db.exec(createTable);
+db.exec('CREATE INDEX IF NOT EXISTS idx_trackers_status ON trackers(status)');
+db.exec('CREATE INDEX IF NOT EXISTS idx_trackers_name ON trackers(name)');
 
 const seedTrackers = [
     { "name": "Tech Store Headphones", "url": "https://site1.com/p1", "targetSelector": ".price", "frequency": "daily", "status": "active" },
@@ -40,4 +44,5 @@ if (count.count === 0) {
     insertMany(seedTrackers)
 };
 
+export { seedTrackers };
 export default db;
