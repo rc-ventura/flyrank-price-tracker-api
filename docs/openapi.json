@@ -19,8 +19,29 @@
     "/trackers": {
       "get": {
         "summary": "List all trackers",
-        "description": "Returns the entire list of tracked competitor products.",
+        "description": "Returns the entire list of tracked competitor products. Supports optional filtering by status and keyword search on the name.",
         "tags": ["Trackers"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter trackers by status",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "paused"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Search trackers by name keyword (case-insensitive)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "A JSON array of all trackers",
@@ -202,7 +223,7 @@
       },
       "delete": {
         "summary": "Delete a tracker",
-        "description": "Removes the tracker from memory. Returns no content on success.",
+        "description": "Removes the tracker from the database. Returns no content on success.",
         "tags": ["Trackers"],
         "parameters": [
           {
@@ -229,6 +250,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "get": {
+        "summary": "Get tracker statistics",
+        "description": "Returns summary counts computed with SQL COUNT in the database.",
+        "tags": ["Meta"],
+        "responses": {
+          "200": {
+            "description": "Summary statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "post": {
+        "summary": "Reset the database",
+        "description": "Deletes all trackers and restores the initial 3 seed trackers (ids restart at 1).",
+        "tags": ["Meta"],
+        "responses": {
+          "200": {
+            "description": "The restored list of seed trackers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tracker"
+                  }
                 }
               }
             }
@@ -287,9 +359,19 @@
             "description": "Whether the tracker is actively monitoring",
             "enum": ["active", "paused"],
             "example": "active"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Creation timestamp (UTC)",
+            "example": "2026-07-30 15:12:20"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Last update timestamp (UTC)",
+            "example": "2026-07-30 15:12:57"
           }
         },
-        "required": ["id", "name", "url", "targetSelector", "frequency", "status"]
+        "required": ["id", "name", "url", "targetSelector", "frequency", "status", "created_at", "updated_at"]
       },
       "TrackerInput": {
         "type": "object",
@@ -331,9 +413,40 @@
             "type": "string",
             "description": "CSS selector used to extract the price from the page",
             "example": "#price-tag"
+          },
+          "frequency": {
+            "type": "string",
+            "description": "How often the tracker checks for price changes",
+            "enum": ["daily", "hourly", "weekly"],
+            "example": "hourly"
+          },
+          "status": {
+            "type": "string",
+            "description": "Whether the tracker is actively monitoring",
+            "enum": ["active", "paused"],
+            "example": "paused"
           }
         },
         "minProperties": 1
+      },
+      "Stats": {
+        "type": "object",
+        "description": "Tracker summary counts",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 3
+          },
+          "active": {
+            "type": "integer",
+            "example": 2
+          },
+          "paused": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": ["total", "active", "paused"]
       },
       "Error": {
         "type": "object",
