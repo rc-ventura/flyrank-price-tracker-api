@@ -195,6 +195,21 @@ On first run, the database is seeded with 3 trackers (only if the table is empty
 | 2 | Marketplace Monitor | `https://site2.com/p2` | `#price-tag` | hourly | active |
 | 3 | Boutique Retailer | `https://site3.com/p3` | `span.amount` | weekly | paused |
 
+### Migration & Seed — Terminal Proof
+
+The screenshot below (captured with Playwright) demonstrates that the database was migrated and seeded: the `trackers` table schema is created, the table is present, and the 3 seed rows are populated.
+
+![DB Migration & Seed — terminal output](docs/db-migration-seed.png)
+
+The commands shown in the terminal above can be reproduced locally:
+
+```bash
+sqlite3 db/trackers.db ".schema trackers"   # migration: table schema
+sqlite3 db/trackers.db ".tables"            # table exists
+sqlite3 db/trackers.db "SELECT COUNT(*) FROM trackers;"   # seed: 3 rows
+sqlite3 db/trackers.db -header -column "SELECT * FROM trackers;"  # seed data
+```
+
 ## Example SQL Query
 
 You can open the database directly and run queries by hand:

@@ -31,9 +31,13 @@ const count = db.prepare('SELECT COUNT(*) as count FROM trackers').get();
 if (count.count === 0) {
     const insertData = db.prepare('INSERT INTO trackers (name, url, targetSelector, frequency, status) VALUES (?, ?, ?, ?, ?)')
 
-    seedTrackers.forEach(t => {
-        insertData.run(t.name, t.url, t.targetSelector, t.frequency, t.status )
-    });
+    const insertMany = db.transaction((trackers) => {
+        trackers.forEach(t => {
+            insertData.run(t.name, t.url, t.targetSelector, t.frequency, t.status)
+        })
+    })
+    
+    insertMany(seedTrackers)
 };
 
 export default db;
