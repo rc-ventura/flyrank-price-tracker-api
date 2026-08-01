@@ -41,20 +41,13 @@ const createTracker = async (body = {}) => {
         throw new ValidationError("Target selector is required");
     }
 
-    try {
-        return await trackerRepository.create({
+    return await trackerRepository.create({
             name: String(name).trim(),
             url: String(url).trim(),
             targetSelector: String(targetSelector).trim(),
             frequency: "daily",
             status: "active"
         });
-    } catch (err) {
-        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-            throw new ValidationError("A tracker with this url and targetSelector already exists");
-        }
-        throw err;
-    }
 }
 
 const updateTracker = async (id, body = {}) => {
@@ -109,14 +102,8 @@ const updateTracker = async (id, body = {}) => {
     }
 
     let updated;
-    try {
-        updated = await trackerRepository.update(id, changes);
-    } catch (err) {
-        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-            throw new ValidationError("A tracker with this url and targetSelector already exists");
-        }
-        throw err;
-    }
+    updated = await trackerRepository.update(id, changes);
+   
     if (!updated) {
         throw new NotFoundError(`Tracker ${id} not found`);
     }

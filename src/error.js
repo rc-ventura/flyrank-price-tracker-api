@@ -3,6 +3,7 @@ class NotFoundError extends Error {
     super(message);
     this.name = 'NotFoundError';
     this.statusCode = 404;
+
   }
 }
 
@@ -14,7 +15,15 @@ class ValidationError extends Error {
   }
 }
 
+class UniqueViolationError extends ValidationError {
+  constructor(message) {
+    super(message);
+    this.name = 'UniqueViolationError';
+  }
+}
+
 export {
   NotFoundError,
-  ValidationError
+  ValidationError,
+  UniqueViolationError
 }
