@@ -123,6 +123,15 @@ const getStats = async () => {
     return trackerRepository.countByStatus();
 }
 
+const healthCheck = async () => {
+ try {
+    await trackerRepository.pingDB();
+    return { status: 'ok', db: 'ok' };
+ } catch (err) {
+    return { status: 'degraded', db: 'down' };
+ }
+}
+
 const resetTrackers = async () => {
     return trackerRepository.reset();
 }
@@ -134,6 +143,7 @@ export default {
     updateTracker,
     deleteTracker,
     getStats,
+    healthCheck,
     resetTrackers
 };
 

@@ -68,6 +68,17 @@ const getStats = async (req, res, next) => {
     }
 }
 
+// GET /health
+const getHealth = async (req, res, next) => {
+    try {
+        const health = await trackerService.healthCheck();
+        const statusCode = health.status === 'ok' ? 200 : 503;
+        res.status(statusCode).json(health);
+    } catch (err) {
+        next(err);
+    }
+};
+
 // POST /reset
 const resetTrackers = async (req, res, next) => {
     try {
@@ -85,5 +96,6 @@ export default {
     updateTracker,
     deleteTracker,
     getStats,
+    getHealth,
     resetTrackers
 }

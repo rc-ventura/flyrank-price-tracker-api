@@ -76,6 +76,11 @@ const countByStatus = async () => {
     return rows[0];
 }
 
+const pingDB = async () => {
+    await pool.query('SELECT 1');
+    return true;
+}
+
 const reset = async () => {
     const client = await pool.connect();
     try {   
@@ -103,5 +108,6 @@ export default {
     update,
     remove,
     countByStatus,
-    reset
+    pingDB,
+    reset,
 };
