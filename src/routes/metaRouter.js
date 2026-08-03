@@ -10,11 +10,7 @@ router.get('/', (req, res) => {
     });
 });
 
-router.get('/health', (req, res) => {
-    res.json({
-        status: 'ok'
-    });
-});
+router.get('/health', trackerController.getHealth);
 
 router.get('/stats', trackerController.getStats);
 

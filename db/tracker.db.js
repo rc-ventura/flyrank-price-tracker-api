@@ -1,48 +1,64 @@
-import Database from 'better-sqlite3'
-const db = new Database(process.env.DB_PATH || 'db/trackers.db')
+import pool from './pool.js';
 
 // Create Table
 const createTable = `
  CREATE TABLE IF NOT EXISTS trackers(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
-    targetSelector TEXT NOT NULL,
+    "targetSelector" TEXT NOT NULL,
     frequency TEXT DEFAULT 'daily',
     status TEXT DEFAULT 'active',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
-    UNIQUE(url, targetSelector)
-
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(url, "targetSelector")
  
  
  );
 `;
 
-db.exec(createTable);
-db.exec('CREATE INDEX IF NOT EXISTS idx_trackers_status ON trackers(status)');
-db.exec('CREATE INDEX IF NOT EXISTS idx_trackers_name ON trackers(name)');
-
+// Seed data
 const seedTrackers = [
     { "name": "Tech Store Headphones", "url": "https://site1.com/p1", "targetSelector": ".price", "frequency": "daily", "status": "active" },
     { "name": "Marketplace Monitor", "url": "https://site2.com/p2", "targetSelector": "#price-tag", "frequency": "hourly", "status": "active" },
     { "name": "Boutique Retailer", "url": "https://site3.com/p3", "targetSelector": "span.amount", "frequency": "weekly", "status": "paused" },
 ]
 
-
-// Seed only if table is empty
-const count = db.prepare('SELECT COUNT(*) as count FROM trackers').get();
-if (count.count === 0) {
-    const insertData = db.prepare('INSERT INTO trackers (name, url, targetSelector, frequency, status) VALUES (?, ?, ?, ?, ?)')
-
-    const insertMany = db.transaction((trackers) => {
-        trackers.forEach(t => {
-            insertData.run(t.name, t.url, t.targetSelector, t.frequency, t.status)
-        })
-    })
+// Sql data query
+const insertData = 'INSERT INTO trackers (name, url, "targetSelector", frequency, status) VALUES ($1, $2, $3, $4, $5)'
     
-    insertMany(seedTrackers)
+
+// init database
+export const initDb = async () => {
+    await pool.query(createTable);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_trackers_status ON trackers(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_trackers_name ON trackers(name)');
+
+    // Seed only if table is empty
+    const { rows } = await pool.query('SELECT COUNT(*)::int as count FROM trackers');
+    if (rows[0].count > 0) return; 
+
+    const client = await pool.connect()
+
+    try {
+        await client.query('BEGIN');
+        for (const t of seedTrackers) {
+            await client.query(insertData, [t.name, t.url, t.targetSelector, t.frequency, t.status]);
+        }
+        await client.query('COMMIT');
+        console.log(`Seeded ${seedTrackers.length} trackers`);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
+
 };
 
-export { seedTrackers };
-export default db;
+
+export { 
+    seedTrackers,
+    insertData, 
+};
+
