@@ -22,8 +22,17 @@ class UniqueViolationError extends ValidationError {
   }
 }
 
+class AuthenticationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'AuthenticationError';
+    this.statusCode = 401;
+  }
+}
+
 export {
   NotFoundError,
   ValidationError,
-  UniqueViolationError
+  UniqueViolationError,
+  AuthenticationError
 }

@@ -1,4 +1,4 @@
-import trackerService from "../services/tracker.Service.js";
+import trackerService from "../services/trackerService.js";
 
 
 // GET /trackers
