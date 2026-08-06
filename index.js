@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import createApp from './src/app.js';
 import { initDb } from './db/tracker.db.js';
+import './db/supabase.client.js';
 
 await initDb();
 
