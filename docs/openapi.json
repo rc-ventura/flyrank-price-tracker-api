@@ -307,9 +307,264 @@
           }
         }
       }
+    },
+    "/auth/signup": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "post": {
+        "summary": "Create a new user account",
+        "description": "Registers a user via Supabase Auth. No authentication required.",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthCredentials"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created — returns the Supabase user object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid email/password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "post": {
+        "summary": "Authenticate & return tokens",
+        "description": "Logs in via Supabase Auth and returns a JWT access token plus a refresh token.",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthCredentials"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT access token + refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid login credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "post": {
+        "summary": "End the user's session",
+        "description": "Signs out via Supabase Auth. Requires a valid Bearer token.",
+        "tags": ["Auth"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Logged out successfully — no content"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid/expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/info": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "get": {
+        "summary": "Read public, open data",
+        "description": "No authentication required.",
+        "tags": ["Public"],
+        "responses": {
+          "200": {
+            "description": "Public welcome message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome stranger! This info is public."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/profile": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "get": {
+        "summary": "Read private profile data",
+        "description": "Verifies the Bearer token with Supabase Auth and returns the user's safe metadata (id, email, account-created date).",
+        "tags": ["Protected"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verified user metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid/expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/dashboard": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "get": {
+        "summary": "Protected dashboard",
+        "description": "Second protected route guarded by the same auth middleware — demonstrates guard reuse with zero new auth code.",
+        "tags": ["Protected"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard welcome + verified user metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome to your dashboard"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/Profile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid/expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Paste the accessToken from POST /auth/login (without the 'Bearer ' prefix)"
+      }
+    },
     "parameters": {
       "TrackerId": {
         "name": "id",
@@ -447,6 +702,60 @@
           }
         },
         "required": ["total", "active", "paused"]
+      },
+      "AuthCredentials": {
+        "type": "object",
+        "description": "Email + password sent to Supabase Auth",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "test@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "password123"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "AuthTokens": {
+        "type": "object",
+        "description": "Tokens returned by a successful login",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token — send as Bearer token in the Authorization header"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Longer-lived token used to obtain a new accessToken without logging in again"
+          }
+        },
+        "required": ["accessToken", "refreshToken"]
+      },
+      "Profile": {
+        "type": "object",
+        "description": "Safe user metadata returned after token verification",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "e20be2ee-98de-46b3-b420-58c517144967"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "test@example.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-06T17:37:36.873417Z"
+          }
+        },
+        "required": ["id", "email", "created_at"]
       },
       "Error": {
         "type": "object",
