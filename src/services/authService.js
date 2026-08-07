@@ -50,9 +50,20 @@ const login = async (body = {}) => {
     }
 }
 
+const verifyToken = async (token) => {
+    const { data: {user}, error } = await supabase.auth.getUser(token);
+    if (error) {
+        throw new AuthenticationError('Invalid or expired token');
+    }
+
+    const {id, email, created_at} = user;
+    return {id, email, created_at};
+}
+
 
 export default {
     signup,
-    login
+    login,
+    verifyToken
 };
 

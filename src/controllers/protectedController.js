@@ -1,5 +1,5 @@
 import { AuthenticationError } from "../error.js";
-
+import authService from "../services/authService.js";
 
 const getProfile = async (req, res, next) => {
     try {
@@ -15,8 +15,8 @@ const getProfile = async (req, res, next) => {
             throw new AuthenticationError("Access token required");
         }
         
-        res.status(200).json({ message: "Token received — verification lands in the next stage" });
-    
+        const user = await authService.verifyToken(token);
+        res.status(200).json(user);
     
     } catch (err) {
         next(err);
