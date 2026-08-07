@@ -64,6 +64,25 @@ const logout = async () => {
     
 }
 
+const refresh = async (body = {}) => {
+    const { refreshToken } = body;
+
+    if (refreshToken === undefined || refreshToken === null || String(refreshToken).trim() === '') {
+        throw new ValidationError("Refresh token is required");
+    }
+    
+    const { data, error } = await supabase.auth.refreshSession({
+        refresh_token: String(refreshToken).trim()
+    });
+    if (error) {
+        throw new AuthenticationError('Invalid or expired refresh token');
+    }
+    return {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token
+    };
+}
+
 
 const verifyToken = async (token) => {
     const { data: {user}, error } = await supabase.auth.getUser(token);
@@ -80,6 +99,7 @@ export default {
     signup,
     login,
     logout,
+    refresh,
     verifyToken
 };
 

@@ -7,6 +7,7 @@ const router = Router();
 // auth router
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
+router.post("/refresh", authController.refresh);
 
 // guard applied to logout
 router.post("/logout", authMiddleware, authController.logout);
