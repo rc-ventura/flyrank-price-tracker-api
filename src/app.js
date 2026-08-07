@@ -4,7 +4,7 @@ import metaRouter from './routes/metaRouter.js';
 import authRouter from './routes/authRouter.js';
 import publicRouter from './routes/publicRouter.js';
 import protectedRouter from './routes/protectedRouter.js';
-import errorHandler from './middlewares/errorHandler.js';
+import errorHandlerMiddleware from './middlewares/errorHandlerMiddleware.js';
 import swaggerUi from 'swagger-ui-express';
 import openApiSpec from '../docs/openapi.json' with { type: 'json' };
 
@@ -32,7 +32,7 @@ const createApp = () => {
     });
 
     // middleware error handler
-    app.use(errorHandler);
+    app.use(errorHandlerMiddleware);
 
     return app;
 } 

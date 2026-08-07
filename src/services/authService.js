@@ -50,6 +50,21 @@ const login = async (body = {}) => {
     }
 }
 
+
+const logout = async () => {
+    
+   
+    const { error } = await supabase.auth.signOut({
+        scope: 'local' // or 'all' to sign out from all devices
+    });
+    
+    if (error) {
+        throw new AuthenticationError('Logout failed');
+    }
+    
+}
+
+
 const verifyToken = async (token) => {
     const { data: {user}, error } = await supabase.auth.getUser(token);
     if (error) {
@@ -64,6 +79,7 @@ const verifyToken = async (token) => {
 export default {
     signup,
     login,
+    logout,
     verifyToken
 };
 

@@ -24,8 +24,19 @@ const login = async (req, res, next) => {
     }
 }
 
+// POST /auth/logout
+const logout = async (req, res, next) => {
+    try {
+        await authService.logout();
+        res.status(204).send();
+    } catch (err) {
+        next(err);
+    }
+}
+
 
 export default {
     signup,
-    login
+    login,
+    logout
 }
