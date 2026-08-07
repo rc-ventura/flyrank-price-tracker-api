@@ -1,7 +1,10 @@
 import express from 'express';
 import trackerRouter from './routes/trackerRouter.js';
 import metaRouter from './routes/metaRouter.js';
-import errorHandler from './middlewares/errorHandler.js';
+import authRouter from './routes/authRouter.js';
+import publicRouter from './routes/publicRouter.js';
+import protectedRouter from './routes/protectedRouter.js';
+import errorHandlerMiddleware from './middlewares/errorHandlerMiddleware.js';
 import swaggerUi from 'swagger-ui-express';
 import openApiSpec from '../docs/openapi.json' with { type: 'json' };
 
@@ -19,6 +22,9 @@ const createApp = () => {
     // middleware routes
     app.use("/", metaRouter);
     app.use("/api/trackers", trackerRouter);
+    app.use("/auth", authRouter);
+    app.use("/public", publicRouter);
+    app.use("/protected", protectedRouter);
 
     // JSON 404 for unmatched routes
     app.use((req, res) => {
@@ -26,7 +32,7 @@ const createApp = () => {
     });
 
     // middleware error handler
-    app.use(errorHandler);
+    app.use(errorHandlerMiddleware);
 
     return app;
 } 
