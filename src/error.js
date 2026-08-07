@@ -30,9 +30,27 @@ class AuthenticationError extends Error {
   }
 }
 
+class ForbiddenError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ForbiddenError';
+    this.statusCode = 403;
+  }
+}
+
+class TooManyRequestsError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'TooManyRequestsError';
+    this.statusCode = 429;
+  }
+}
+
 export {
   NotFoundError,
   ValidationError,
   UniqueViolationError,
-  AuthenticationError
+  AuthenticationError,
+  ForbiddenError,
+  TooManyRequestsError
 }

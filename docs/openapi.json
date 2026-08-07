@@ -402,6 +402,79 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too many failed login attempts — brute-force protection. Retry after the number of seconds in the Retry-After header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before trying again",
+                "schema": {
+                  "type": "integer",
+                  "example": 573
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "post": {
+        "summary": "Exchange a refresh token for new tokens",
+        "description": "Obtains a fresh JWT access token (and a rotated refresh token) from Supabase Auth without logging in again. Access tokens are short-lived (~1 h); the refresh token keeps the session alive.",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New JWT access token + rotated refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -544,6 +617,64 @@
           },
           "401": {
             "description": "Missing, malformed, or invalid/expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/protected/admin": {
+      "servers": [
+        {
+          "url": "http://localhost:3000"
+        }
+      ],
+      "get": {
+        "summary": "Admin-only area",
+        "description": "Demonstrates authorization (403) layered on top of authentication (401): any verified user reaches the guard, but only users whose app_metadata.role is 'admin' pass. app_metadata is server-controlled (writable only via the service_role admin API or SQL), unlike user_metadata which clients can edit themselves. Grant the role via Supabase SQL Editor: update auth.users set raw_app_meta_data = raw_app_meta_data || '{\"role\":\"admin\"}'::jsonb where email = 'you@example.com';",
+        "tags": ["Protected"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin welcome + verified user metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome to the admin area"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/Profile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid/expired token — authentication failed (who are you?)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not an admin — authorization failed (I know you, and no)",
             "content": {
               "application/json": {
                 "schema": {
@@ -735,6 +866,18 @@
         },
         "required": ["accessToken", "refreshToken"]
       },
+      "RefreshTokenInput": {
+        "type": "object",
+        "description": "Refresh token received from a previous login or refresh call",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "The refreshToken string from POST /auth/login or /auth/refresh",
+            "example": "htjgt2vj6lkd"
+          }
+        },
+        "required": ["refreshToken"]
+      },
       "Profile": {
         "type": "object",
         "description": "Safe user metadata returned after token verification",
@@ -753,9 +896,15 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-08-06T17:37:36.873417Z"
+          },
+          "role": {
+            "type": "string",
+            "description": "Authorization role from app_metadata (server-controlled) — defaults to 'user'; 'admin' unlocks /protected/admin",
+            "enum": ["user", "admin"],
+            "example": "user"
           }
         },
-        "required": ["id", "email", "created_at"]
+        "required": ["id", "email", "created_at", "role"]
       },
       "Error": {
         "type": "object",

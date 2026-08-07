@@ -91,7 +91,9 @@ const verifyToken = async (token) => {
     }
 
     const {id, email, created_at} = user;
-    return {id, email, created_at};
+    // role comes from app_metadata (server-controlled) 
+    const role = user.app_metadata?.role ?? 'user';
+    return {id, email, created_at, role};
 }
 
 

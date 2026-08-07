@@ -11,7 +11,7 @@ Postgres writes its data files to `/var/lib/postgresql/data` **inside the contai
 - **Test 1 — volume preserved:** created a tracker ("Volume Persistence Proof", id 10004), ran `docker compose down` (no `-v`), then `up`. All 10004 trackers survived with unchanged `created_at` timestamps — the volume kept the data.
 - **Test 2 — volume destroyed:** ran `docker compose down -v` (the `-v` flag deletes the named volume), then `up`. The database reset to the 3 seed trackers only — the manually-created data was gone.
 
-![Mortality experiment — volume persistence vs destruction](../mortality-experiment.png)
+![Mortality experiment — volume persistence vs destruction](./assets/mortality-experiment.png)
 
 This is exactly why volumes exist: **containers are disposable, data is not.** The named volume (`pg_data`) decouples the data's lifetime from the container's lifetime.
 
@@ -47,7 +47,7 @@ res.status(statusCode).json(health);
 
 **One critical bug this surfaced:** the `pg` connection pool emits `'error'` events on **idle clients** when the DB goes down — a separate event stream from query-time errors. Without a `pool.on('error', ...)` handler, Node treats it as an unhandled error and the entire process crashes before the health check can respond. Adding the handler to `db/pool.js` is what makes the 503 path reachable.
 
-![Health check — 200 ok → 503 degraded → 200 ok](../health-check.png)
+![Health check — 200 ok → 503 degraded → 200 ok](./assets/health-check.png)
 
 ## 3 · Index Performance — EXPLAIN ANALYZE Before/After
 
@@ -72,7 +72,7 @@ Bitmap Heap Scan on trackers  (actual time=0.060..0.287 rows=1001 loops=1)
 
 **Result: 6.204 ms → 0.381 ms ≈ 16x faster.** The query planner switched from `Seq Scan` (read all 10,003 rows, discard 9,002) to `Bitmap Index Scan` (consult the index, fetch only the 1,001 matching rows).
 
-![EXPLAIN ANALYZE — before vs after index](../explain-analyze.png)
+![EXPLAIN ANALYZE — before vs after index](./assets/explain-analyze.png)
 
 **Key takeaway:** indexes pay off at scale. On toy data they can be a net loss; the planner knows this and won't use them. Always verify with `EXPLAIN ANALYZE` on realistic data volumes.
 
@@ -92,7 +92,7 @@ The production image uses a **multi-stage build**: one stage installs only produ
 2. **`npm ci --omit=dev`** — skips `devDependencies` (nodemon) entirely
 3. **Multi-stage** — the deps stage's layer cache and any build artifacts are discarded; only the final `COPY --from=deps` output ships
 
-![Image size — naive 1.65GB vs multi-stage 251MB](../image-size.png)
+![Image size — naive 1.65GB vs multi-stage 251MB](./assets/image-size.png)
 
 Smaller images mean faster pulls, faster deploys, less disk, and a reduced attack surface (fewer packages = fewer potential vulnerabilities).
 
@@ -100,6 +100,6 @@ Smaller images mean faster pulls, faster deploys, less disk, and a reduced attac
 
 The running application and its interactive API documentation, served from the containerized stack:
 
-![Live health endpoint](../health-live.png)
+![Live health endpoint](./assets/health-live.png)
 
-![Swagger UI](../swagger-ui.png)
+![Swagger UI](./assets/swagger-ui.png)

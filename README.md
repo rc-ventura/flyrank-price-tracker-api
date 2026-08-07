@@ -56,11 +56,13 @@ docker compose up -d --build  # app + Postgres
 | Endpoint | Method | Auth | Success | Errors |
 |----------|--------|------|---------|--------|
 | `/auth/signup` | POST | No | 201 + user | 400 |
-| `/auth/login` | POST | No | 200 + tokens | 400 / 401 |
+| `/auth/login` | POST | No | 200 + tokens | 400 / 401 / 429 (rate limit) |
+| `/auth/refresh` | POST | No | 200 + new tokens | 400 / 401 |
 | `/auth/logout` | POST | Bearer | 204 | 401 |
 | `/public/info` | GET | No | 200 + message | — |
 | `/protected/profile` | GET | Bearer | 200 + user | 401 |
 | `/protected/dashboard` | GET | Bearer | 200 + dashboard | 401 |
+| `/protected/admin` | GET | Bearer + admin role | 200 + admin area | 401 / 403 |
 
 > Sample curl commands: [endpoints.md](docs/endpoints.md)
 
@@ -73,6 +75,8 @@ docker compose up -d --build  # app + Postgres
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Docker Postgres image config |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_KEY` | Supabase publishable key (`sb_publishable_...`) |
+| `LOGIN_MAX_FAILED_ATTEMPTS` | Optional — failed logins before 429 (default `5`) |
+| `LOGIN_RATE_LIMIT_WINDOW_MS` | Optional — rate-limit window in ms (default `600000`) |
 
 > Full setup guide: [setup-and-run.md](docs/setup-and-run.md)
 
@@ -96,4 +100,4 @@ docker compose up -d --build  # app + Postgres
 
 All 8 requirements from w4.md §6 — **PASS**. Full test results: [w4-auth.md](docs/w4-auth.md)
 
-![Swagger UI overview](docs/swagger-1-overview.png)
+![Swagger UI overview](docs/assets/swagger-1-overview.png)

@@ -60,6 +60,13 @@ The server logs `Server is running on port 3000`. Swagger UI is at `http://local
 1. Create a free project at [supabase.com](https://supabase.com) (no credit card)
 2. **Settings → API Keys** → copy the **Publishable key** (`sb_publishable_...`)
 3. **Authentication → Sign In / Providers → Email** → turn **"Confirm email" OFF** (so fresh signups can log in immediately — leave ON in production)
+4. *(Optional, for the `/protected/admin` extra)* Grant a user the admin role in **`app_metadata`** (server-controlled — `user_metadata` is client-editable and must not be trusted for authorization). Open the **SQL Editor** in the Supabase Dashboard and run:
+   ```sql
+   update auth.users
+   set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}'::jsonb
+   where email = 'you@example.com';
+   ```
+   The user's next verified request returns `role: "admin"` and passes the `requireAdmin` guard.
 
 ## Environment Variables
 
