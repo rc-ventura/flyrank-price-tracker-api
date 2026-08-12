@@ -41,7 +41,7 @@ docker compose up -d --build  # app + Postgres
 
 | Operation | Method | Endpoint | Success | Error |
 |-----------|--------|----------|---------|-------|
-| Read All | GET | `/api/trackers` | 200 OK | 500 Server Error |
+| Read All (paginated) | GET | `/api/trackers?limit=20&offset=0` | 200 OK + `{ data, pagination }` | 400 / 500 |
 | Read Single | GET | `/api/trackers/:id` | 200 OK | 404 Not Found |
 | Create | POST | `/api/trackers` | 201 Created | 400 Bad Request |
 | Update | PUT | `/api/trackers/:id` | 200 OK | 400 / 404 |
@@ -50,6 +50,20 @@ docker compose up -d --build  # app + Postgres
 | Stats | GET | `/stats` | 200 OK | — |
 | Reset | POST | `/reset` | 200 OK | — |
 | Swagger UI | GET | `/docs` | 200 OK | — |
+
+`GET /api/trackers` also accepts `?status=active|paused` and `?search=keyword`, which compose with pagination.
+
+### Why real APIs never return "everything"
+
+`GET /api/trackers` is paginated (`limit`/`offset`, default 20, hard cap 100) and returns an envelope `{ data, pagination: { total, limit, offset } }` instead of a bare array. That is not a stylistic choice — unbounded "return the whole table" endpoints break in production for concrete reasons:
+
+1. **Payload size explodes silently.** With 3 seed rows the difference is invisible; with 3 million rows the response is gigabytes of JSON. Serialization alone can pin the CPU and exhaust the Node.js heap before the first byte is sent.
+2. **The database pays for it on every request.** `SELECT * FROM trackers` without `LIMIT` forces a full scan + sort of the entire table for *every* caller, even one that only needed the first page. `LIMIT`/`OFFSET` push the work down to exactly the rows being returned.
+3. **One endpoint becomes a DoS vector.** If "list all" is unbounded, any client — buggy loop or malicious actor — can request the whole dataset repeatedly and starve the server of memory, bandwidth, and DB connections. The `MAX_LIMIT = 100` cap is the same defensive instinct as the login rate limiter: bound what a single request can cost.
+4. **Clients can't handle it either.** Mobile apps, browsers, and dashboards all render in pages; nobody displays 3 million rows. Pagination lets the client ask for exactly what it can show, and `total` tells it how many pages exist (`pages = ceil(total / limit)`).
+5. **Predictable latency.** A page of 20 rows answers in milliseconds whether the table has 3 rows or 3 million — response time stops depending on table size.
+
+The rule of thumb: **the server decides the maximum, the client decides the page.** Offset pagination (`limit`/`offset`) is the simplest honest version; at very large scale you'd switch to cursor/keyset pagination so skipped rows don't have to be scanned.
 
 ### Auth Endpoints (W4)
 

@@ -4,7 +4,7 @@
 
 | Operation | Method | Endpoint | Success | Error |
 |-----------|--------|----------|---------|-------|
-| Read All | GET | `/api/trackers` | 200 OK | 500 Server Error |
+| Read All (paginated) | GET | `/api/trackers` | 200 OK + `{ data, pagination }` | 400 (bad limit/offset) / 500 |
 | Read Single | GET | `/api/trackers/:id` | 200 OK | 404 Not Found |
 | Create | POST | `/api/trackers` | 201 Created | 400 Bad Request |
 | Update | PUT | `/api/trackers/:id` | 200 OK | 400 / 404 |
@@ -14,7 +14,13 @@
 | Reset | POST | `/reset` | 200 OK | — |
 | Swagger UI | GET | `/docs` | 200 OK | — |
 
-`GET /api/trackers` also supports optional query parameters: `?status=active|paused` (SQL `WHERE` filter) and `?search=keyword` (SQL `ILIKE` on the name, case-insensitive).
+`GET /api/trackers` supports optional query parameters, freely combinable:
+- `?status=active|paused` — SQL `WHERE` filter
+- `?search=keyword` — SQL `ILIKE` on the name, case-insensitive
+- `?limit=N` — page size (default `20`, max `100`; `400` if not an integer in range)
+- `?offset=N` — rows to skip (default `0`; `400` if negative or non-integer)
+
+The response is always an envelope: `data` holds the page, `pagination.total` counts **all** rows matching the filters (ignoring limit/offset), so clients can compute the page count as `ceil(total / limit)`.
 
 ## Auth Endpoints (W4)
 
@@ -51,22 +57,25 @@ The three seed inserts run inside a single **transaction**, so seeding is all-or
 
 ## Sample curl Output
 
-### GET /api/trackers — List all trackers
+### GET /api/trackers?limit=2&offset=2 — List a page of trackers
 
 ```bash
-curl -i http://localhost:3000/api/trackers
+curl -i "http://localhost:3000/api/trackers?limit=2&offset=2"
 ```
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
 
-[
-  {"id":1,"name":"Tech Store Headphones","url":"https://site1.com/p1","targetSelector":".price","frequency":"daily","status":"active"},
-  {"id":2,"name":"Marketplace Monitor","url":"https://site2.com/p2","targetSelector":"#price-tag","frequency":"hourly","status":"active"},
-  {"id":3,"name":"Boutique Retailer","url":"https://site3.com/p3","targetSelector":"span.amount","frequency":"weekly","status":"paused"}
-]
+{
+  "data": [
+    {"id":1,"name":"Tech Store Headphones","url":"https://site1.com/p1","targetSelector":".price","frequency":"daily","status":"active","created_at":"...","updated_at":"..."}
+  ],
+  "pagination": {"total":3,"limit":2,"offset":2}
+}
 ```
+
+Without params, `GET /api/trackers` returns the first page with defaults: `"pagination":{"total":3,"limit":20,"offset":0}`. Invalid input is rejected: `?limit=abc` or `?limit=0` → `400 {"error":"Limit must be a positive integer"}`; `?limit=101` → `400 {"error":"Limit cannot exceed 100"}`; `?offset=-1` → `400 {"error":"Offset must be a non-negative integer"}`.
 
 ### POST /api/trackers — Create a tracker
 

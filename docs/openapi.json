@@ -18,8 +18,8 @@
   "paths": {
     "/trackers": {
       "get": {
-        "summary": "List all trackers",
-        "description": "Returns the entire list of tracked competitor products. Supports optional filtering by status and keyword search on the name.",
+        "summary": "List trackers (paginated)",
+        "description": "Returns a page of tracked competitor products plus pagination metadata. Supports optional filtering by status and keyword search on the name. Never returns the whole table: limit defaults to 20 and is capped at 100.",
         "tags": ["Trackers"],
         "parameters": [
           {
@@ -40,18 +40,50 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size — how many trackers to return (default 20, max 100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 2
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "How many trackers to skip before starting the page (default 0)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "example": 2
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "A JSON array of all trackers",
+            "description": "A page of trackers with pagination metadata",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Tracker"
-                  }
+                  "$ref": "#/components/schemas/TrackerPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid limit/offset (non-integer, out of range) or invalid status filter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -758,6 +790,40 @@
           }
         },
         "required": ["id", "name", "url", "targetSelector", "frequency", "status", "created_at", "updated_at"]
+      },
+      "TrackerPage": {
+        "type": "object",
+        "description": "Paginated envelope returned by GET /trackers — the API never returns the whole table at once",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tracker"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "description": "Total rows matching the filters (ignores limit/offset)",
+                "example": 3
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Page size actually applied",
+                "example": 2
+              },
+              "offset": {
+                "type": "integer",
+                "description": "Rows skipped before this page",
+                "example": 2
+              }
+            },
+            "required": ["total", "limit", "offset"]
+          }
+        },
+        "required": ["data", "pagination"]
       },
       "TrackerInput": {
         "type": "object",

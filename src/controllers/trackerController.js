@@ -2,11 +2,16 @@ import trackerService from "../services/trackerService.js";
 
 
 // GET /trackers
-// Read: list (with optional ?status= and ?search= extras)
+// Read: list (with optional ?status= and ?search= extras, ?limit= & ?offset= pagination)
 const getTrackers = async (req, res, next) => {
     try {
-        const trackers = await trackerService.listAllTrackers({ status: req.query.status, search: req.query.search });
-        res.status(200).json(trackers);
+        const result = await trackerService.listAllTrackers({
+            status: req.query.status,
+            search: req.query.search,
+            limit: req.query.limit,
+            offset: req.query.offset
+        });
+        res.status(200).json(result);
     } catch (err) {
         next(err);
     }
