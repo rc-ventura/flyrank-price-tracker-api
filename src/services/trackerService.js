@@ -2,7 +2,10 @@ import trackerRepository from "../repositories/tracker.Repository.js";
 import { ValidationError, NotFoundError } from "../error.js";
 
 
-const listAllTrackers = async ({status, search} = {}) => {
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+const listAllTrackers = async ({status, search, limit, offset} = {}) => {
     if(status !== undefined && status !== 'active' && status !== 'paused') {
         throw new ValidationError("Status must be 'active' or 'paused'");
     }
@@ -15,7 +18,30 @@ const listAllTrackers = async ({status, search} = {}) => {
         }
     }
 
-    return trackerRepository.findAll({status, search: word});
+    let pageLimit = DEFAULT_LIMIT;
+    if (limit !== undefined) {
+        pageLimit = Number(limit);
+        if (!Number.isInteger(pageLimit) || pageLimit < 1) {
+            throw new ValidationError("Limit must be a positive integer");
+        }
+        if (pageLimit > MAX_LIMIT) {
+            throw new ValidationError(`Limit cannot exceed ${MAX_LIMIT}`);
+        }
+    }
+
+    let pageOffset = 0;
+    if (offset !== undefined) {
+        pageOffset = Number(offset);
+        if (!Number.isInteger(pageOffset) || pageOffset < 0) {
+            throw new ValidationError("Offset must be a non-negative integer");
+        }
+    }
+
+    const { rows, total } = await trackerRepository.findAll({status, search: word, limit: pageLimit, offset: pageOffset});
+    return {
+        data: rows,
+        pagination: { total, limit: pageLimit, offset: pageOffset }
+    };
 }
 
 

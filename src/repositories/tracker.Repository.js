@@ -11,24 +11,32 @@ const translateUniqueViolation = (err) => {
 }
 
 
-const findAll = async ({status, search} = {}) => {
+const findAll = async ({status, search, limit, offset} = {}) => {
     const conditions = []
     const params = []
-    
+
     if (status !== undefined) {
         params.push(status)
         conditions.push(`status =  $${params.length}`)
     }
-    
+
     if (search !== undefined) {
         params.push(`%${search}%`)
         conditions.push(`name ILIKE $${params.length}`)
 
     }
-    
+
     const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
-    const {rows} = await pool.query(`SELECT * FROM trackers${where} ORDER BY name`, params);
-    return rows;
+
+    const {rows: countRows} = await pool.query(`SELECT COUNT(*)::integer AS total FROM trackers${where}`, params);
+    const total = countRows[0].total;
+
+    params.push(limit, offset);
+    const {rows} = await pool.query(
+        `SELECT * FROM trackers${where} ORDER BY name LIMIT $${params.length - 1} OFFSET $${params.length}`,
+        params
+    );
+    return { rows, total };
 }
 
 const findById = async (id) => {
