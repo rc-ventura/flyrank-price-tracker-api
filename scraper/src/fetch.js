@@ -11,7 +11,9 @@ export const fetchPage = async (url, cacheName) => {
         const cached = await readFile(cachePath, 'utf8');
         const {size} = await stat(cachePath);
         console.log(`CACHE HIT ${url} (${size} bytes)`);
-        return cached;
+        
+        return { html: cached, fromCache: true };
+    
     } catch (error) {
         if (error.code !== 'ENOENT') throw error;
         // ENOENT = file missing → fall through to fetch
@@ -51,5 +53,5 @@ export const fetchPage = async (url, cacheName) => {
     await rename(tmpPath, cachePath);
     console.log(`FETCH ${url} (${html.length} bytes, status 200)`);
 
-    return html;
+    return { html, fromCache: false };
 };
