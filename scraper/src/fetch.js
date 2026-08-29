@@ -9,10 +9,10 @@ export const fetchPage = async (url, cacheName) => {
     // PATH 1: cache hit
     try {
         const cached = await readFile(cachePath, 'utf8');
-        const {size} = await stat(cachePath);
+        const {size, mtime} = await stat(cachePath);
         console.log(`CACHE HIT ${url} (${size} bytes)`);
-        
-        return { html: cached, fromCache: true };
+
+        return { html: cached, fromCache: true, fetchedAt: mtime.toISOString() };
     
     } catch (error) {
         if (error.code !== 'ENOENT') throw error;
@@ -53,5 +53,5 @@ export const fetchPage = async (url, cacheName) => {
     await rename(tmpPath, cachePath);
     console.log(`FETCH ${url} (${html.length} bytes, status 200)`);
 
-    return { html, fromCache: false };
+    return { html, fromCache: false, fetchedAt: new Date().toISOString() };
 };
