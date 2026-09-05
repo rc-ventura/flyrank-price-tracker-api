@@ -13,6 +13,7 @@ const cacheNameFromUrl = (url) => {
     return pathname.replace(/^\//, '').replace(/\//g, '-');
 }
 
+// function to discover all book URLs from the catalogue and transform them to absolute URLs
 export const discoveryCatalogue = async (startUrl) => {
     const bookUrls = new Map();    
     let discovered = 0;

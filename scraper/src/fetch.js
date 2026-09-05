@@ -3,6 +3,7 @@ import config from './config.js';
 
 const CACHE_DIR = new URL('../cache/', import.meta.url);
 
+// function to fetch a page by URL and cache it
 export const fetchPage = async (url, cacheName) => {
     const cachePath = new URL(cacheName, CACHE_DIR);
 

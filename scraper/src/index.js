@@ -1,20 +1,25 @@
 import config from './config.js';
-import { discoveryCatalogue } from './discover.js';
+import {discoveryCatalogue} from './discover.js';
 import {extractAll} from './extract.js';
-
+import {normalizeAndValidate} from './validate.js';
+import {storeResults} from './store.js';
 
 const main = async () => {
     const firstPageUrl = `${config.baseUrl}/catalogue/page-1.html`;
-    const { pagesFetched, discovered, bookUrls } = await discoveryCatalogue(firstPageUrl);
-    
+    const {pagesFetched, discovered, bookUrls} = await discoveryCatalogue(firstPageUrl);
+
     console.log(`catalogue_pages=${pagesFetched}`);
     console.log(`discovered=${discovered}`);
     console.log(`unique_urls=${bookUrls.size}`);
-    
-    const records = await extractAll(bookUrls);
-    console.log(JSON.stringify(records[0], null, 2));   // one complete raw record
-    console.log(`detail_pages=${records.length}`);
 
+    const rawRecords = await extractAll(bookUrls);
+    console.log(`detail_pages=${rawRecords.length}`);
+
+    const results = rawRecords.map(normalizeAndValidate);
+    const {valid, invalid} = await storeResults(results);
+
+    console.log(`valid_records=${valid}`);
+    console.log(`invalid_records=${invalid}`);
 };
 
 main().catch((error) => {
