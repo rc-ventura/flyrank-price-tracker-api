@@ -35,6 +35,8 @@ docker compose up -d --build  # app + Postgres
 
 > For W4 auth development (local dev + Supabase), see [setup-and-run.md](docs/setup-and-run.md)
 
+> For W5 polite scraper assignment, see [scraper/README.md](scraper/README.md)
+
 ## Endpoint Reference
 
 ### Tracker CRUD (W1–W3)
