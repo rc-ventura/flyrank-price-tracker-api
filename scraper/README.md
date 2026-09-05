@@ -102,3 +102,17 @@ Use an official API when one exists. Never bypass logins, paywalls, or blocks. C
 ## Honest limitation
 
 Cache keys are caller-supplied filenames, not URL-derived hashes. This is safe with one caller and one target (63 known URLs, no collision possible), but would need proper key derivation before adding a second site. The cache also has no TTL, eviction, or HTTP header awareness (`ETag`/`304`) — it is a development convenience, not a production cache. Assignment A16 covers the production version.
+
+## Roadmap — optional extras
+
+Planned improvements beyond the graded deliverable. None are required for the W5 submission — tracked here so the work survives to a later session.
+
+| # | Extra | What it teaches | Status | Est. |
+|---|-------|-----------------|--------|------|
+| 1 | **Parser tests** — 5+ unit tests: price normalization, relative→absolute URLs, missing description, duplicate URLs, one malformed fixture | testing without the network (fixtures) | planned | ~30 min |
+| 2 | **CSV export** — `books.csv` from validated records, noting which values were flattened | format conversion | planned | ~20 min |
+| 3 | **Changed since last run** — hash each record, report new/changed/unchanged/gone counts | change detection | planned | ~45 min |
+| 4 | **Selector fixtures** — 2 small saved HTML files proving the parser handles missing description + extra whitespace | fixtures — testing without the network | planned | ~20 min |
+| 5 | **Retry like a pro** — exponential backoff, `Retry-After` header, structured logs with URL/status/attempt | production retry policy (A16 preview) | planned | ~1 h |
+| 6 | **Tiny dashboard** — local HTML page: record count, price range, failures, last-fresh timestamp | observability | planned | ~45 min |
+| 7 | **Price-sandbox extension** — re-point pipeline at a price sandbox (e.g. scrapingsandbox.com) via site adapters | portfolio demo for the price-tracker product | planned | ~1 h |
