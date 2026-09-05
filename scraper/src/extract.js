@@ -35,15 +35,20 @@ const extractRecord = (html, productUrl, sourcePage, fetchedAt) => {
 
 export const extractAll = async (bookUrls) => {
     const records = [];
+    const failures = [];
 
     for (const [productUrl, sourcePage] of bookUrls) {
-        const {html, fromCache, fetchedAt} = await fetchPage(productUrl, cacheNameFromUrl(productUrl));
-        records.push(extractRecord(html, productUrl, sourcePage, fetchedAt));
- 
-        if (!fromCache) await sleep(config.delayMs);
+        try {
+            const {html, fromCache, fetchedAt} = await fetchPage(productUrl, cacheNameFromUrl(productUrl));
+            records.push(extractRecord(html, productUrl, sourcePage, fetchedAt));
+     
+            if (!fromCache) await sleep(config.delayMs);
+        } catch (error) {
+            // a page broken is logged and skipped — the other pages survive
+            console.error(`ERROR extracting ${productUrl}: ${error.message}`);
+            failures.push({productUrl, sourcePage, error: error.message});
+        }
     }
  
-    return records;
-
-
-}
+    return {records, failures};
+};
